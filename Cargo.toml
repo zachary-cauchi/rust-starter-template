@@ -1,0 +1,12 @@
+[package]
+name = "rust-starter-template"
+description = "My take on a Rust project starter. It may not have everything, it may not be the best, but it is mine."
+authors = ["Zachary Cauchi <zach.cauchi@hotmail.com>"]
+version = "0.1.0-prealpha"
+readme = "README.md"
+repository = "https://github.com/zachary-cauchi/rust-starter-template"
+license = "GPLv3"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1.35.1", features = ["full"] }
