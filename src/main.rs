@@ -1,5 +1,5 @@
 use tokio::task::JoinSet;
-use tracing::{debug, info, Level};
+use tracing::{debug, error, info, span, Instrument, Level};
 use utils::logging::LogSubscriberBuilder;
 
 #[tokio::main]
@@ -15,14 +15,20 @@ async fn main() {
     let mut task_tracker = JoinSet::new();
 
     for i in 0..TOTAL_TASKS {
-        task_tracker.spawn(async move {
-            debug!("Entered task {i}");
+        task_tracker.spawn(
+            async move {
+                debug!("Entered task {i}");
 
-            format!("Hello from task {i}")
-        });
+                format!("Hello from task {i}")
+            }
+            .instrument(span!(Level::DEBUG, "Hello-Tasks")),
+        );
     }
 
-    while let Some(msg) = task_tracker.join_next().await {
-        info!("Received msg \"{}\"", msg.unwrap());
+    while let Some(task_result) = task_tracker.join_next().await {
+        match task_result {
+            Ok(msg) => info!("Received msg \"{}\"", msg),
+            Err(e) => error!("Failed to process task: {}", e),
+        }
     }
 }
