@@ -1,0 +1,9 @@
+[program]
+name = "rust-starter-template"
+
+[logging]
+cli_log_level = "INFO"
+
+[[database]]
+name = "Test1"
+url = "Something something"

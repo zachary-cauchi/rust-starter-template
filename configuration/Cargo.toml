@@ -1,0 +1,14 @@
+[package]
+name = "configuration"
+description = "Configuration module for loading and setting application-level configuration."
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+config = "0.13.4"
+lazy_static = "1.4.0"
+parking_lot = "0.12.1"
+serde = "1.0.193"
+tokio = { workspace = true }
