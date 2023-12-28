@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use tracing::Level;
 use tracing_subscriber::{
     filter,
@@ -7,6 +5,8 @@ use tracing_subscriber::{
     prelude::*,
     reload, Registry,
 };
+
+use crate::core_types::CoreResult;
 
 #[derive(Debug)]
 pub struct LogSubscriberBuilder {
@@ -71,7 +71,7 @@ impl LogSubscriberBuilder {
     }
 
     /// Refresh the global subscribers with any updated filters.
-    pub fn refresh(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn refresh(&mut self) -> CoreResult<()> {
         if let Some(reload_handle) = &self.fmt_layer_reload_handle {
             reload_handle.modify(|filter| {
                 *filter = filter::LevelFilter::from_level(self.fmt_log_level.unwrap())

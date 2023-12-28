@@ -1,3 +1,4 @@
+pub mod core_types;
 pub mod logging;
 
 pub fn add(left: usize, right: usize) -> usize {

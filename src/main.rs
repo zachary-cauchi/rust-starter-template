@@ -1,12 +1,10 @@
-use std::error::Error;
-
 use configuration::{app_config::AppConfig, AppConfigManager};
 use tokio::task::JoinSet;
 use tracing::{debug, error, info, span, Instrument, Level};
-use utils::logging::LogSubscriberBuilder;
+use utils::{core_types::CoreResult, logging::LogSubscriberBuilder};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> CoreResult<()> {
     let mut log_manager = LogSubscriberBuilder::new().with_fmt_logging(Level::INFO);
 
     log_manager.build();
@@ -21,7 +19,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     const TOTAL_TASKS: usize = 14;
 
-    let mut task_tracker = JoinSet::new();
+    let mut task_tracker: JoinSet<String> = JoinSet::new();
 
     for i in 0..TOTAL_TASKS {
         task_tracker.spawn(

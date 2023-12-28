@@ -20,6 +20,7 @@ license-file = "LICENSE"
 edition = "2021"
 
 [workspace.dependencies]
+config = "0.13.4"
 tracing = "0.1.40"
 tokio = { version = "1.35.1", features = ["full"] }
 configuration = { version = "0.1.0-prealpha", path = "configuration" }

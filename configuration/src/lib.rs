@@ -1,9 +1,8 @@
-use std::error::Error;
-
 use app_config::AppConfig;
 use config::Config;
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
+use utils::core_types::CoreResult;
 
 pub mod app_config;
 
@@ -26,21 +25,21 @@ lazy_static! {
 pub struct AppConfigManager {}
 
 impl AppConfigManager {
-    pub fn set(key: &str, value: &str) -> Result<(), Box<dyn Error>> {
+    pub fn set(key: &str, value: &str) -> CoreResult<()> {
         //TODO: Replace deprecated Config::set method.
         CONFIG.write().set(key, value)?;
 
         Ok(())
     }
 
-    pub fn get<'de, T>(key: &'de str) -> Result<T, Box<dyn Error>>
+    pub fn get<'de, T>(key: &'de str) -> CoreResult<T>
     where
         T: serde::Deserialize<'de>,
     {
         Ok(CONFIG.read().get::<T>(key)?)
     }
 
-    pub fn clone_to_app_config() -> Result<AppConfig, Box<dyn Error>> {
+    pub fn clone_to_app_config() -> CoreResult<AppConfig> {
         let c = CONFIG.read().clone();
 
         let app_config: AppConfig = c.into();
