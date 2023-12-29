@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use tracing::{level_filters::LevelFilter, Level};
 use tracing_subscriber::{
     filter::{self, Filtered},
@@ -15,13 +17,26 @@ type ReloadHandle = Handle<Filtered<BaseLayer, LevelFilter, Registry>, Registry>
 
 pub struct LogLayerConfig {
     pub log_level: Level,
+    pub params: HashMap<String, String>,
     pub reload_handle: Option<ReloadHandle>,
+}
+
+impl std::fmt::Debug for LogLayerConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LogLayerConfig")
+            .field("log_level", &self.log_level)
+            .field("params", &self.params)
+            // Cannot print reload_handle because it does not use
+            // .field("reload_handle", &self.reload_handle.)
+            .finish_non_exhaustive()
+    }
 }
 
 impl Default for LogLayerConfig {
     fn default() -> Self {
         Self {
             log_level: Level::INFO,
+            params: HashMap::new(),
             reload_handle: None,
         }
     }
@@ -31,12 +46,12 @@ impl LogLayerConfig {
     fn new(level: Level) -> Self {
         Self {
             log_level: level,
-            reload_handle: None,
+            ..Default::default()
         }
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct LogSubscriberBuilder {
     fmt: Option<LogLayerConfig>,
     #[cfg(feature = "journald")]
@@ -95,6 +110,19 @@ impl LogSubscriberBuilder {
         }
     }
 
+    #[cfg(feature = "journald")]
+    pub fn get_syslog_identifier(&self) -> String {
+        if let Some(journald) = &self.journald {
+            journald
+                .params
+                .get("syslog_identifier")
+                .unwrap_or(&"".to_string())
+                .clone()
+        } else {
+            "".to_string()
+        }
+    }
+
     /// Set the global logging filters.
     /// Can only be called once.
     pub fn build(&mut self) -> CoreResult<()> {
@@ -115,11 +143,18 @@ impl LogSubscriberBuilder {
 
         #[cfg(feature = "journald")]
         if let Some(ref mut journald_config) = self.journald {
-            let journald_layer: Box<dyn tracing_subscriber::Layer<Registry> + Send + Sync> =
-                tracing_journald::layer()?.boxed();
+            let journald_layer = tracing_journald::layer()?;
+
+            let syslog_identifier = journald_layer.syslog_identifier();
+
+            journald_config.params.insert(
+                "syslog_identifier".to_string(),
+                syslog_identifier.to_string(),
+            );
 
             let (layer, reload_handle): (ReloadLayer, ReloadHandle) = reload::Layer::new(
                 journald_layer
+                    .boxed()
                     .with_filter(filter::LevelFilter::from_level(journald_config.log_level)),
             );
 

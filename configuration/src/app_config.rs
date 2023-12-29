@@ -10,6 +10,7 @@ pub struct Database {
 #[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Logging {
     pub cli_log_level: String,
+    pub journald_log_level: String,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize)]

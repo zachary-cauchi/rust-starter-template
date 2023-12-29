@@ -3,6 +3,7 @@ name = "rust-starter-template"
 
 [logging]
 cli_log_level = "DEBUG"
+journald_log_level = "DEBUG"
 
 [[database]]
 name = "Test1"
