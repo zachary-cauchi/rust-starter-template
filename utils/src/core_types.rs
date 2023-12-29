@@ -56,3 +56,9 @@ impl From<config::ConfigError> for CoreError {
         Self::with_source("Configuration error", Box::new(_err))
     }
 }
+
+impl From<std::io::Error> for CoreError {
+    fn from(_err: std::io::Error) -> Self {
+        Self::with_source("IO Error", Box::new(_err))
+    }
+}

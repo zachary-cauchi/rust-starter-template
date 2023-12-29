@@ -7,7 +7,10 @@ use utils::{core_types::CoreResult, logging::LogSubscriberBuilder};
 async fn main() -> CoreResult<()> {
     let mut log_manager = LogSubscriberBuilder::new().with_fmt_logging(Level::INFO);
 
-    log_manager.build();
+    #[cfg(feature = "journald")]
+    let mut log_manager = log_manager.with_journald_logging(Level::INFO);
+
+    log_manager.build()?;
 
     info!("Hello World");
 

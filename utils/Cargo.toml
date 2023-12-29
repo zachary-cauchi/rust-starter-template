@@ -12,4 +12,8 @@ license.workspace = true
 config = { workspace = true }
 thiserror = "1.0.52"
 tracing = { workspace = true }
+tracing-journald = { version = "0.3.0", optional = true }
 tracing-subscriber = "0.3.18"
+
+[features]
+journald = ["dep:tracing-journald"]
