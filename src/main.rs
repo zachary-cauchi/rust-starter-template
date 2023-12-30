@@ -57,6 +57,9 @@ async fn main() -> CoreResult<()> {
     #[cfg(feature = "journald")]
     let mut log_manager = log_manager.with_journald_logging(Level::INFO);
 
+    #[cfg(feature = "logfile")]
+    let mut log_manager = log_manager.with_logfile_logging(Level::TRACE);
+
     log_manager.build()?;
 
     info!("Application started");
@@ -71,11 +74,18 @@ async fn main() -> CoreResult<()> {
 
     debug!("Configuration loaded.");
 
-    let mut log_manager = log_manager.with_fmt_logging_str(&app_config.logging.cli_log_level);
+    let mut log_manager =
+        log_manager.with_fmt_logging(app_config.logging.cli_log_level.parse::<Level>()?);
 
     #[cfg(feature = "journald")]
     let mut log_manager =
-        log_manager.with_journald_logging_str(&app_config.logging.journald_log_level);
+        log_manager.with_journald_logging(app_config.logging.journald_log_level.parse::<Level>()?);
+
+    #[cfg(feature = "logfile")]
+    let mut log_manager = log_manager
+        .with_logfile_logging(app_config.logging.rolling_log_level.parse::<Level>()?)
+        .with_logfile_prefix(app_config.logging.rolling_log_prefix)
+        .with_logfile_base_path(app_config.logging.rolling_log_path);
 
     log_manager.refresh()?;
 

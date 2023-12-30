@@ -36,3 +36,4 @@ utils = { version = "0.1.0-prealpha", path = "utils" }
 
 [features]
 journald = ["utils/journald"]
+logfile = ["utils/logfile"]

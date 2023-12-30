@@ -31,21 +31,33 @@ impl std::fmt::Debug for LogLayerConfig {
     }
 }
 
-impl Default for LogLayerConfig {
-    fn default() -> Self {
+impl LogLayerConfig {
+    fn new(level: Level) -> Self {
         Self {
-            log_level: Level::INFO,
+            log_level: level,
             params: HashMap::new(),
             reload_handle: None,
         }
     }
 }
 
-impl LogLayerConfig {
+#[cfg(feature = "logfile")]
+#[derive(Debug)]
+pub struct LogFileLogLayerConfig {
+    pub layer_config: LogLayerConfig,
+    pub base_dir: String,
+    pub prefix: String,
+    pub _guard: Option<tracing_appender::non_blocking::WorkerGuard>,
+}
+
+#[cfg(feature = "logfile")]
+impl LogFileLogLayerConfig {
     fn new(level: Level) -> Self {
         Self {
-            log_level: level,
-            ..Default::default()
+            layer_config: LogLayerConfig::new(level),
+            base_dir: "logs/".to_string(),
+            prefix: "rust-starter-template".to_string(),
+            _guard: None,
         }
     }
 }
@@ -55,6 +67,8 @@ pub struct LogSubscriberBuilder {
     fmt: Option<LogLayerConfig>,
     #[cfg(feature = "journald")]
     journald: Option<LogLayerConfig>,
+    #[cfg(feature = "logfile")]
+    logfile: Option<LogFileLogLayerConfig>,
 }
 
 impl LogSubscriberBuilder {
@@ -83,30 +97,31 @@ impl LogSubscriberBuilder {
         self
     }
 
-    pub fn with_fmt_logging_str(self, level_str: &str) -> Self {
-        match Self::level_from_str(level_str) {
-            Some(level) => self.with_fmt_logging(level),
-            None => self,
+    #[cfg(feature = "logfile")]
+    pub fn with_logfile_logging(mut self, level: Level) -> Self {
+        if let Some(ref mut logfile) = &mut self.logfile {
+            logfile.layer_config.log_level = level;
+        } else {
+            self.logfile = Some(LogFileLogLayerConfig::new(level));
         }
+
+        self
     }
 
-    #[cfg(feature = "journald")]
-    pub fn with_journald_logging_str(self, level_str: &str) -> Self {
-        match Self::level_from_str(level_str) {
-            Some(level) => self.with_journald_logging(level),
-            None => self,
-        }
+    #[cfg(feature = "logfile")]
+    pub fn with_logfile_base_path(mut self, base_dir: String) -> Self {
+        let logfile = self.logfile.as_mut().unwrap();
+        logfile.base_dir = base_dir;
+
+        self
     }
 
-    fn level_from_str(level_str: &str) -> Option<Level> {
-        match level_str.to_uppercase().as_str() {
-            "INFO" => Some(Level::INFO),
-            "DEBUG" => Some(Level::DEBUG),
-            "WARN" => Some(Level::WARN),
-            "ERROR" => Some(Level::ERROR),
-            "TRACE" => Some(Level::TRACE),
-            _ => None,
-        }
+    #[cfg(feature = "logfile")]
+    pub fn with_logfile_prefix(mut self, prefix: String) -> Self {
+        let logfile = self.logfile.as_mut().unwrap();
+        logfile.prefix = prefix;
+
+        self
     }
 
     #[cfg(feature = "journald")]
@@ -161,6 +176,33 @@ impl LogSubscriberBuilder {
             layers.push(layer);
         }
 
+        #[cfg(feature = "logfile")]
+        if let Some(ref mut logfile_config) = self.logfile {
+            let file_appender = tracing_appender::rolling::RollingFileAppender::builder()
+                .rotation(tracing_appender::rolling::Rotation::DAILY)
+                .filename_prefix(&logfile_config.prefix)
+                .filename_suffix("log")
+                .max_log_files(5)
+                .build(&logfile_config.base_dir)?;
+
+            let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+
+            let fmt_inner_layer = fmt::Layer::new()
+                .with_ansi(false)
+                .with_writer(non_blocking)
+                .boxed()
+                .with_filter(filter::LevelFilter::from_level(
+                    logfile_config.layer_config.log_level,
+                ));
+            let (layer, reload_handle): (ReloadLayer, ReloadHandle) =
+                reload::Layer::new(fmt_inner_layer);
+
+            logfile_config._guard = Some(_guard);
+            logfile_config.layer_config.reload_handle = Some(reload_handle);
+
+            layers.push(layer);
+        }
+
         let error_layer = ErrorLayer::default();
 
         registry.with(layers).with(error_layer).init();
@@ -182,6 +224,15 @@ impl LogSubscriberBuilder {
             let reload_handle = journald_config.reload_handle.as_ref().unwrap();
             reload_handle.modify(|layer_box| {
                 *layer_box.filter_mut() = filter::LevelFilter::from_level(journald_config.log_level)
+            })?;
+        }
+
+        #[cfg(feature = "logfile")]
+        if let Some(logfile_config) = &self.logfile {
+            let reload_handle = logfile_config.layer_config.reload_handle.as_ref().unwrap();
+            reload_handle.modify(|layer_box| {
+                *layer_box.filter_mut() =
+                    filter::LevelFilter::from_level(logfile_config.layer_config.log_level)
             })?;
         }
 

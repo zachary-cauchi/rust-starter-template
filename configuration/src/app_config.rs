@@ -11,6 +11,9 @@ pub struct Database {
 pub struct Logging {
     pub cli_log_level: String,
     pub journald_log_level: String,
+    pub rolling_log_path: String,
+    pub rolling_log_level: String,
+    pub rolling_log_prefix: String,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize)]
