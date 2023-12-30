@@ -1,8 +1,8 @@
-use color_eyre::eyre;
+use color_eyre::Result;
 use thiserror::Error;
 use tracing_error::SpanTrace;
 
-pub type CoreResult<T> = Result<T, eyre::Report>;
+pub type CoreResult<T> = Result<T>;
 
 pub type CoreErrorSource = Box<dyn std::error::Error + Send + Sync>;
 
