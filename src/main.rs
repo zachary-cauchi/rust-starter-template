@@ -1,7 +1,9 @@
 use configuration::{app_config::AppConfig, AppConfigManager};
 use tokio::{fs::File, io::AsyncReadExt, task::JoinSet};
 use tracing::{debug, error, info, instrument, span, Instrument, Level};
-use utils::{core_types::CoreResult, logging::LogSubscriberBuilder};
+use utils::{
+    core_types::CoreResult, logging::LogSubscriberBuilder, panic::initialize_panic_handler,
+};
 
 #[instrument]
 async fn test_errors() -> CoreResult<()> {
@@ -20,9 +22,7 @@ async fn test_errors() -> CoreResult<()> {
 }
 
 #[instrument]
-async fn entrypoint() -> CoreResult<()> {
-    test_errors().await?;
-
+async fn test_tasks() -> CoreResult<()> {
     const TOTAL_TASKS: usize = 14;
 
     let mut task_tracker: JoinSet<String> = JoinSet::new();
@@ -48,9 +48,18 @@ async fn entrypoint() -> CoreResult<()> {
     Ok(())
 }
 
+#[instrument]
+async fn entrypoint() -> CoreResult<()> {
+    test_errors().await?;
+
+    test_tasks().await?;
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> CoreResult<()> {
-    color_eyre::install().unwrap();
+    initialize_panic_handler()?;
 
     let mut log_manager = LogSubscriberBuilder::new().with_fmt_logging(Level::INFO);
 

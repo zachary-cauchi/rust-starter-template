@@ -1,5 +1,6 @@
 pub mod core_types;
 pub mod logging;
+pub mod panic;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right

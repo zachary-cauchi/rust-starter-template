@@ -11,6 +11,7 @@ license.workspace = true
 [dependencies]
 color-eyre = { workspace = true }
 config = { workspace = true }
+human-panic = "1.2.2"
 thiserror = "1.0.52"
 tracing = { workspace = true }
 tracing-appender = { version = "0.2.3", optional = true }
