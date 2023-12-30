@@ -1,19 +1,27 @@
+use color_eyre::eyre;
 use thiserror::Error;
+use tracing_error::SpanTrace;
 
-pub type CoreResult<T> = Result<T, CoreError>;
+pub type CoreResult<T> = Result<T, eyre::Report>;
+
 pub type CoreErrorSource = Box<dyn std::error::Error + Send + Sync>;
 
 #[derive(Error, Debug)]
 pub struct CoreError {
     pub msg: String,
+    pub context: SpanTrace,
     #[cfg(feature = "nightly")]
-    backtrace: std::backtrace::Backtrace,
-    source: Option<CoreErrorSource>,
+    pub backtrace: std::backtrace::Backtrace,
+    pub source: Option<CoreErrorSource>,
 }
 
 impl std::fmt::Display for CoreError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.msg)
+        write!(f, "{}", self.msg)?;
+
+        self.context.fmt(f)?;
+
+        Ok(())
     }
 }
 
@@ -21,6 +29,7 @@ impl Default for CoreError {
     fn default() -> Self {
         CoreError {
             msg: "".to_string(),
+            context: SpanTrace::capture(),
             #[cfg(feature = "nightly")]
             backtrace: std::backtrace::Backtrace::capture(),
             source: None,

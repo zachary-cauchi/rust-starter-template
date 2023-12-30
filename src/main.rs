@@ -1,7 +1,22 @@
 use configuration::{app_config::AppConfig, AppConfigManager};
-use tokio::task::JoinSet;
+use tokio::{fs::File, io::AsyncReadExt, task::JoinSet};
 use tracing::{debug, error, info, span, Instrument, Level};
 use utils::{core_types::CoreResult, logging::LogSubscriberBuilder};
+
+async fn test_errors() -> CoreResult<()> {
+    debug!("Opening file.");
+
+    let mut found_file = File::open("non-existent-file").await?;
+    let mut buffer = vec![];
+
+    debug!("Reading file contents.");
+
+    let byte_count = found_file.read_to_end(&mut buffer).await?;
+
+    info!("Read {byte_count} bytes.");
+
+    Ok(())
+}
 
 #[tokio::main]
 async fn main() -> CoreResult<()> {
@@ -29,6 +44,12 @@ async fn main() -> CoreResult<()> {
         log_manager.with_journald_logging_str(&app_config.logging.journald_log_level);
 
     log_manager.refresh()?;
+
+    color_eyre::install().unwrap();
+
+    let file_span = span!(Level::DEBUG, "File-management");
+
+    test_errors().instrument(file_span).await?;
 
     const TOTAL_TASKS: usize = 14;
 

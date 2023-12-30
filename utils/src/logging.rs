@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use tracing::{level_filters::LevelFilter, Level};
+use tracing_error::ErrorLayer;
 use tracing_subscriber::{
     filter::{self, Filtered},
     fmt::{self},
@@ -26,8 +27,6 @@ impl std::fmt::Debug for LogLayerConfig {
         f.debug_struct("LogLayerConfig")
             .field("log_level", &self.log_level)
             .field("params", &self.params)
-            // Cannot print reload_handle because it does not use
-            // .field("reload_handle", &self.reload_handle.)
             .finish_non_exhaustive()
     }
 }
@@ -162,7 +161,9 @@ impl LogSubscriberBuilder {
             layers.push(layer);
         }
 
-        registry.with(layers).init();
+        let error_layer = ErrorLayer::default();
+
+        registry.with(layers).with(error_layer).init();
 
         Ok(())
     }
