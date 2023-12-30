@@ -1,9 +1,7 @@
 use configuration::{app_config::AppConfig, AppConfigManager};
 use tokio::{fs::File, io::AsyncReadExt, task::JoinSet};
 use tracing::{debug, error, info, instrument, span, Instrument, Level};
-use utils::{
-    core_types::CoreResult, logging::LogSubscriberBuilder, panic::initialize_panic_handler,
-};
+use utils::{core_types::CoreResult, logging::LoggingManager, panic::initialize_panic_handler};
 
 #[instrument]
 async fn test_errors() -> CoreResult<()> {
@@ -61,13 +59,15 @@ async fn entrypoint() -> CoreResult<()> {
 async fn main() -> CoreResult<()> {
     initialize_panic_handler()?;
 
-    let mut log_manager = LogSubscriberBuilder::new().with_fmt_logging(Level::INFO);
+    let log_manager = LoggingManager::new();
 
     #[cfg(feature = "journald")]
-    let mut log_manager = log_manager.with_journald_logging(Level::INFO);
+    let log_manager = log_manager.with_journald_logging(Level::INFO);
 
     #[cfg(feature = "logfile")]
-    let mut log_manager = log_manager.with_logfile_logging(Level::TRACE);
+    let log_manager = log_manager.with_logfile_logging(Level::TRACE);
+
+    let mut log_manager = log_manager.with_fmt_logging(Level::INFO);
 
     log_manager.build()?;
 
@@ -83,15 +83,15 @@ async fn main() -> CoreResult<()> {
 
     debug!("Configuration loaded.");
 
-    let mut log_manager =
+    let log_manager =
         log_manager.with_fmt_logging(app_config.logging.cli_log_level.parse::<Level>()?);
 
     #[cfg(feature = "journald")]
-    let mut log_manager =
+    let log_manager =
         log_manager.with_journald_logging(app_config.logging.journald_log_level.parse::<Level>()?);
 
     #[cfg(feature = "logfile")]
-    let mut log_manager = log_manager
+    let log_manager = log_manager
         .with_logfile_logging(app_config.logging.rolling_log_level.parse::<Level>()?)
         .with_logfile_prefix(app_config.logging.rolling_log_prefix)
         .with_logfile_base_path(app_config.logging.rolling_log_path);

@@ -63,7 +63,7 @@ impl LogFileLogLayerConfig {
 }
 
 #[derive(Default, Debug)]
-pub struct LogSubscriberBuilder {
+pub struct LoggingManager {
     fmt: Option<LogLayerConfig>,
     #[cfg(feature = "journald")]
     journald: Option<LogLayerConfig>,
@@ -71,7 +71,7 @@ pub struct LogSubscriberBuilder {
     logfile: Option<LogFileLogLayerConfig>,
 }
 
-impl LogSubscriberBuilder {
+impl LoggingManager {
     pub fn new() -> Self {
         Self::default()
     }
@@ -211,7 +211,7 @@ impl LogSubscriberBuilder {
     }
 
     /// Refresh the global subscribers with any updated filters.
-    pub fn refresh(&mut self) -> CoreResult<()> {
+    pub fn refresh(&self) -> CoreResult<()> {
         if let Some(fmt_config) = &self.fmt {
             let reload_handle = fmt_config.reload_handle.as_ref().unwrap();
             reload_handle.modify(|layer_box| {

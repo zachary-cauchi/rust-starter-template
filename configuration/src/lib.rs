@@ -27,6 +27,7 @@ pub struct AppConfigManager {}
 impl AppConfigManager {
     pub fn set(key: &str, value: &str) -> CoreResult<()> {
         //TODO: Replace deprecated Config::set method.
+        #[allow(deprecated)]
         CONFIG.write().set(key, value)?;
 
         Ok(())
