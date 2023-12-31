@@ -17,7 +17,13 @@ pub struct Logging {
 }
 
 #[derive(Default, Debug, Serialize, Deserialize)]
+pub struct Program {
+    pub name: String,
+}
+
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct AppConfig {
+    pub program: Program,
     pub logging: Logging,
     pub databases: Vec<Database>,
 }
@@ -25,6 +31,9 @@ pub struct AppConfig {
 impl From<Config> for AppConfig {
     fn from(config: Config) -> Self {
         AppConfig {
+            program: config
+                .get::<Program>("program")
+                .expect("No valid program configuration found."),
             logging: config
                 .get::<Logging>("logging")
                 .expect("No valid logging configuration found."),

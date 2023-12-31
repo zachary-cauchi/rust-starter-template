@@ -3,7 +3,7 @@ name = "rust-starter-template"
 
 [logging]
 cli_log_level = "DEBUG"
-journald_log_level = "DEBUG"
+journald_log_level = "TRACE"
 rolling_log_path = "logs/"
 rolling_log_prefix = "rust-starter-template.log"
 rolling_log_level = "TRACE"
