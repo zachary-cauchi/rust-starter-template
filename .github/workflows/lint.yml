@@ -6,8 +6,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: rustup component add clippy
-      - uses: actions-rs/rs-clippy-check@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+            components: clippy
+            override: true
+      - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-features
