@@ -1,11 +1,12 @@
 name: Lint
 on: [push, workflow_dispatch]
 
+permissions:
+  checks: write
+
 jobs:
   clippy_check:
     runs-on: ubuntu-latest
-    permissions:
-      checks: write
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
