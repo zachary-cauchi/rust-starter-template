@@ -26,6 +26,28 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug executable 'rust-starter-template' - demo-tasks",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=rust-starter-template",
+                    "--package=rust-starter-template",
+                    "--all-features"
+                ],
+                "filter": {
+                    "name": "rust-starter-template",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "demo-tasks",
+                "4"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in executable 'rust-starter-template'",
             "cargo": {
                 "args": [

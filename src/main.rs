@@ -1,56 +1,21 @@
+use cli::cli_match;
 use configuration::{app_config::AppConfig, AppConfigManager};
-use tokio::{fs::File, io::AsyncReadExt, task::JoinSet};
-use tracing::{debug, error, info, instrument, span, Instrument, Level};
+use rt::{test_errors, test_tasks};
+use tracing::{debug, info, instrument, Level};
 use utils::{core_types::CoreResult, logging::LoggingManager, panic::initialize_panic_handler};
 
 #[instrument]
-async fn test_errors() -> CoreResult<()> {
-    debug!("Opening file.");
+async fn entrypoint() -> CoreResult<()> {
+    let command = cli_match()?;
 
-    let mut found_file = File::open("non-existent-file").await?;
-    let mut buffer = vec![];
-
-    debug!("Reading file contents.");
-
-    let byte_count = found_file.read_to_end(&mut buffer).await?;
-
-    info!("Read {byte_count} bytes.");
-
-    Ok(())
-}
-
-#[instrument]
-async fn test_tasks() -> CoreResult<()> {
-    const TOTAL_TASKS: usize = 14;
-
-    let mut task_tracker: JoinSet<String> = JoinSet::new();
-
-    for i in 0..TOTAL_TASKS {
-        task_tracker.spawn(
-            async move {
-                debug!("Entered task {i}");
-
-                format!("Hello from task {i}")
-            }
-            .instrument(span!(Level::DEBUG, "Hello-Tasks")),
-        );
-    }
-
-    while let Some(task_result) = task_tracker.join_next().await {
-        match task_result {
-            Ok(msg) => info!("Received msg \"{}\"", msg),
-            Err(e) => error!("Failed to process task: {}", e),
+    match command {
+        cli::Command::TasksDemo { num_tasks } => {
+            test_tasks(num_tasks).await?;
+        }
+        cli::Command::FileError => {
+            test_errors().await?;
         }
     }
-
-    Ok(())
-}
-
-#[instrument]
-async fn entrypoint() -> CoreResult<()> {
-    test_errors().await?;
-
-    test_tasks().await?;
 
     Ok(())
 }
@@ -62,7 +27,7 @@ async fn main() -> CoreResult<()> {
     let log_manager = LoggingManager::new();
 
     #[cfg(feature = "journald")]
-    let log_manager = log_manager.with_journald_logging(Level::INFO);
+    let log_manager = log_manager.with_journald_logging(Level::TRACE);
 
     #[cfg(feature = "logfile")]
     let log_manager = log_manager.with_logfile_logging(Level::TRACE);
@@ -71,10 +36,10 @@ async fn main() -> CoreResult<()> {
 
     log_manager.build()?;
 
-    info!("Application started");
+    debug!("Application started");
 
     #[cfg(feature = "journald")]
-    info!(
+    tracing::trace!(
         "Journald logging enabled with syslog identifier \"{}\"",
         log_manager.get_syslog_identifier()
     );

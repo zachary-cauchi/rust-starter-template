@@ -49,7 +49,7 @@ impl AppConfigManager {
         Ok(app_config)
     }
 
-    pub fn add_source(file: PathBuf) -> CoreResult<AppConfig> {
+    pub fn add_file_source(file: PathBuf) -> CoreResult<AppConfig> {
         {
             let mut builder = CONFIG_BUILDER.write();
             *builder = builder

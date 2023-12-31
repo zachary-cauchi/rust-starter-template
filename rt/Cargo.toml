@@ -1,0 +1,12 @@
+[package]
+name = "rt"
+description = "Contains the runtime entrypoints for the CLI commands."
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+tokio.workspace = true
+tracing.workspace = true
+utils = { workspace = true }
