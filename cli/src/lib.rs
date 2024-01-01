@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{fmt::Display, path::PathBuf};
 
 use clap::{Parser, Subcommand};
 use configuration::AppConfigManager;
@@ -30,6 +30,15 @@ pub enum Command {
         #[arg(value_name = "NUM_TASKS", default_value = "64")]
         num_tasks: usize,
     },
+}
+
+impl Display for Command {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::FileError => write!(f, "FileError"),
+            Self::TasksDemo { num_tasks } => write!(f, "TasksDemo({num_tasks})"),
+        }
+    }
 }
 
 pub fn cli_match() -> CoreResult<Command> {

@@ -23,6 +23,8 @@ edition = "2021"
 color-eyre = "0.6.2"
 config = "0.13.4"
 tracing = "0.1.40"
+parking_lot = "0.12.1"
+serde = "1.0.193"
 tokio = { version = "1.35.1", features = ["full"] }
 configuration = { version = "0.1.0-prealpha", path = "configuration" }
 cli = { version = "0.1.0-prealpha", path = "cli" }
