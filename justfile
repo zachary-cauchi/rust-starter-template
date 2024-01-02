@@ -15,3 +15,7 @@ run_with_full_backtrace:
 open_journal:
     #!/usr/bin/env bash
     journalctl -e -t rust-starter-template
+
+run_tests:
+    #!/usr/bin/env bash
+    cargo test --workspace
