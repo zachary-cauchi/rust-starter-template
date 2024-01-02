@@ -13,3 +13,4 @@ utils = { workspace = true }
 parking_lot = { workspace = true }
 configuration = { workspace = true }
 cli = { workspace = true }
+clap_complete = "4.4.5"

@@ -30,7 +30,7 @@ pub fn initialize_panic_handler() -> CoreResult<()> {
             use human_panic::{handle_dump, print_msg, Metadata};
             let meta = Metadata {
                 version: env!("CARGO_PKG_VERSION").into(),
-                name: "rust-starter-template".into(),
+                name: project_name_str!().into(),
                 authors: env!("CARGO_PKG_AUTHORS").replace(':', ", ").into(),
                 homepage: env!("CARGO_PKG_HOMEPAGE").into(),
             };

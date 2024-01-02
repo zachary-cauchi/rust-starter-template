@@ -1,11 +1,12 @@
 use std::rc::Weak;
 
-use cli::Command;
+use clap_complete::generate;
+use cli::{get_command, AppCommand};
 use configuration::app_config::AppConfig;
 use parking_lot::RwLock;
 use tokio::{fs::File, io::AsyncReadExt, task::JoinSet};
 use tracing::{debug, error, info, instrument, Instrument};
-use utils::{core_types::CoreResult, logging::LoggingManager};
+use utils::{core_types::CoreResult, logging::LoggingManager, project_name_str};
 
 #[derive(Debug)]
 pub struct AppState {
@@ -22,14 +23,38 @@ impl AppState {
     }
 
     #[instrument(skip(self), fields(command))]
-    pub async fn enter(&self, command: Command) -> CoreResult<()> {
+    pub async fn enter(&self, command: AppCommand) -> CoreResult<()> {
         info!("Executing command \"{command}\".");
         match command {
-            Command::TasksDemo { num_tasks } => {
+            AppCommand::TasksDemo { num_tasks } => {
                 self.test_tasks(num_tasks).await?;
             }
-            Command::FileError => {
+            AppCommand::FileError => {
                 self.test_errors().await?;
+            }
+            AppCommand::Completion { subcommand } => {
+                let mut app = get_command();
+
+                match subcommand {
+                    cli::CompletionSubCommand::Bash => generate(
+                        clap_complete::shells::Bash,
+                        &mut app,
+                        project_name_str!(),
+                        &mut std::io::stdout(),
+                    ),
+                    cli::CompletionSubCommand::Zsh => generate(
+                        clap_complete::shells::Zsh,
+                        &mut app,
+                        project_name_str!(),
+                        &mut std::io::stdout(),
+                    ),
+                    cli::CompletionSubCommand::Fish => generate(
+                        clap_complete::shells::Fish,
+                        &mut app,
+                        project_name_str!(),
+                        &mut std::io::stdout(),
+                    ),
+                }
             }
         }
 
