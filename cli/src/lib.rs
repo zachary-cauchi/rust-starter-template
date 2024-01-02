@@ -69,7 +69,7 @@ pub fn cli_match() -> CoreResult<AppCommand> {
     let cli = Cli::parse();
 
     if let Some(config_path) = cli.config_path {
-        AppConfigManager::add_file_source(config_path)?;
+        AppConfigManager::add_file_source(config_path);
     }
 
     Ok(cli.command)

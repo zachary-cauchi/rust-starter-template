@@ -49,14 +49,69 @@ impl AppConfigManager {
         Ok(app_config)
     }
 
-    pub fn add_file_source(file: PathBuf) -> CoreResult<AppConfig> {
+    pub fn add_file_source(file: PathBuf) {
+        let mut builder = CONFIG_BUILDER.write();
+        *builder = builder
+            .clone()
+            .add_source(config::File::with_name(file.to_str().unwrap()));
+    }
+}
+
+#[cfg(test)]
+mod app_config_manager_tests {
+    use std::path::PathBuf;
+
+    #[test]
+    fn add_file_source_works() {
+        use crate::AppConfigManager;
+        use crate::CONFIG_BUILDER;
+
+        let source = PathBuf::from("../configs/test_config.toml");
+
+        AppConfigManager::add_file_source(source);
+
+        let found_name: String = CONFIG_BUILDER
+            .read()
+            .build_cloned()
+            .unwrap()
+            .get_string("program.name")
+            .unwrap();
+
+        assert_eq!("test-source".to_string(), found_name);
+    }
+
+    #[test]
+    fn get_works() {
+        use crate::AppConfigManager;
+        use crate::CONFIG_BUILDER;
+
         {
             let mut builder = CONFIG_BUILDER.write();
             *builder = builder
                 .clone()
-                .add_source(config::File::with_name(file.to_str().unwrap()));
+                .set_override("test-get-method", "Foo")
+                .unwrap();
         }
 
-        Self::clone_to_app_config()
+        let found_name: String = AppConfigManager::get("test-get-method").unwrap();
+
+        assert_eq!("Foo".to_string(), found_name);
+    }
+
+    #[test]
+    fn set_works() {
+        use crate::AppConfigManager;
+        use crate::CONFIG_BUILDER;
+
+        AppConfigManager::set("test-set-method", "Foo").unwrap();
+
+        let found_name = CONFIG_BUILDER
+            .read()
+            .build_cloned()
+            .unwrap()
+            .get_string("test-set-method")
+            .unwrap();
+
+        assert_eq!("Foo".to_string(), found_name);
     }
 }
