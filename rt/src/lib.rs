@@ -9,12 +9,12 @@ use tracing::{debug, error, info, instrument, Instrument};
 use utils::{core_types::CoreResult, logging::LoggingManager, project_name_str};
 
 #[derive(Debug)]
-pub struct AppState {
+pub struct AppRuntime {
     pub log_manager: Weak<LoggingManager>,
     pub app_config: RwLock<AppConfig>,
 }
 
-impl AppState {
+impl AppRuntime {
     pub fn new(log_manager: Weak<LoggingManager>, app_config: AppConfig) -> Self {
         Self {
             log_manager,
@@ -62,7 +62,7 @@ impl AppState {
     }
 
     #[instrument]
-    pub async fn test_errors(&self) -> CoreResult<()> {
+    async fn test_errors(&self) -> CoreResult<()> {
         debug!("Opening file.");
 
         let mut found_file = File::open("non-existent-file").await?;
@@ -78,7 +78,7 @@ impl AppState {
     }
 
     #[instrument(skip(self), fields(task_count))]
-    pub async fn test_tasks(&self, task_count: usize) -> CoreResult<()> {
+    async fn test_tasks(&self, task_count: usize) -> CoreResult<()> {
         let mut task_tracker: JoinSet<String> = JoinSet::new();
 
         for i in 0..task_count {

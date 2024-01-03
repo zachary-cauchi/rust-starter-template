@@ -2,7 +2,7 @@ use std::rc::{Rc, Weak};
 
 use cli::cli_match;
 use configuration::{app_config::AppConfig, AppConfigManager};
-use rt::AppState;
+use rt::AppRuntime;
 use tracing::{debug, info, instrument, Level};
 use utils::{core_types::CoreResult, logging::LoggingManager, panic::initialize_panic_handler};
 
@@ -43,7 +43,7 @@ async fn entrypoint(log_manager: Weak<LoggingManager>, app_config: AppConfig) ->
     let command = cli_match()?;
 
     //TODO: Fix log_manager not logging all logs before program closing. Maybe only pass in a reference to the log_manager instead.
-    let app_state: AppState = AppState::new(log_manager, app_config);
+    let app_state: AppRuntime = AppRuntime::new(log_manager, app_config);
 
     app_state.enter(command).await?;
 
