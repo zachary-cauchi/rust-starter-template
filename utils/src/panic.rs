@@ -1,6 +1,6 @@
 use tracing::error;
 
-use crate::core_types::CoreResult;
+use crate::core_types::{CoreError, CoreResult};
 
 pub fn initialize_panic_handler() -> CoreResult<()> {
     let (panic_hook, eyre_hook) = color_eyre::config::HookBuilder::default()
@@ -13,7 +13,7 @@ pub fn initialize_panic_handler() -> CoreResult<()> {
         .display_env_section(true)
         .into_hooks();
 
-    eyre_hook.install()?;
+    eyre_hook.install().map_err(CoreError::from)?;
 
     std::panic::set_hook(Box::new(move |panic_info| {
         error!("Panic detected!");

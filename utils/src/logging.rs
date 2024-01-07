@@ -10,7 +10,7 @@ use tracing_subscriber::{
     Registry,
 };
 
-use crate::core_types::CoreResult;
+use crate::core_types::{CoreError, CoreResult};
 
 type BaseLayer = Box<dyn tracing_subscriber::Layer<Registry> + Send + Sync>;
 type ReloadLayer = Layer<Filtered<BaseLayer, LevelFilter, Registry>, Registry>;
@@ -157,7 +157,7 @@ impl LoggingManager {
 
         #[cfg(feature = "journald")]
         if let Some(ref mut journald_config) = self.journald {
-            let journald_layer = tracing_journald::layer()?;
+            let journald_layer = tracing_journald::layer().map_err(CoreError::from)?;
 
             let syslog_identifier = journald_layer.syslog_identifier();
 
@@ -183,7 +183,8 @@ impl LoggingManager {
                 .filename_prefix(&logfile_config.prefix)
                 .filename_suffix("log")
                 .max_log_files(5)
-                .build(&logfile_config.base_dir)?;
+                .build(&logfile_config.base_dir)
+                .map_err(CoreError::from)?;
 
             let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
 
@@ -214,26 +215,33 @@ impl LoggingManager {
     pub fn refresh(&self) -> CoreResult<()> {
         if let Some(fmt_config) = &self.fmt {
             let reload_handle = fmt_config.reload_handle.as_ref().unwrap();
-            reload_handle.modify(|layer_box| {
-                *layer_box.filter_mut() = filter::LevelFilter::from_level(fmt_config.log_level)
-            })?;
+            reload_handle
+                .modify(|layer_box| {
+                    *layer_box.filter_mut() = filter::LevelFilter::from_level(fmt_config.log_level)
+                })
+                .map_err(CoreError::from)?;
         }
 
         #[cfg(feature = "journald")]
         if let Some(journald_config) = &self.journald {
             let reload_handle = journald_config.reload_handle.as_ref().unwrap();
-            reload_handle.modify(|layer_box| {
-                *layer_box.filter_mut() = filter::LevelFilter::from_level(journald_config.log_level)
-            })?;
+            reload_handle
+                .modify(|layer_box| {
+                    *layer_box.filter_mut() =
+                        filter::LevelFilter::from_level(journald_config.log_level)
+                })
+                .map_err(CoreError::from)?;
         }
 
         #[cfg(feature = "logfile")]
         if let Some(logfile_config) = &self.logfile {
             let reload_handle = logfile_config.layer_config.reload_handle.as_ref().unwrap();
-            reload_handle.modify(|layer_box| {
-                *layer_box.filter_mut() =
-                    filter::LevelFilter::from_level(logfile_config.layer_config.log_level)
-            })?;
+            reload_handle
+                .modify(|layer_box| {
+                    *layer_box.filter_mut() =
+                        filter::LevelFilter::from_level(logfile_config.layer_config.log_level)
+                })
+                .map_err(CoreError::from)?;
         }
 
         Ok(())

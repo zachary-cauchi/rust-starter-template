@@ -4,7 +4,7 @@ use app_config::AppConfig;
 use config::{Config, ConfigBuilder};
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
-use utils::core_types::CoreResult;
+use utils::core_types::{CoreError, CoreResult};
 
 pub mod app_config;
 
@@ -28,7 +28,10 @@ impl AppConfigManager {
     pub fn set(key: &str, value: &str) -> CoreResult<()> {
         {
             let mut builder = CONFIG_BUILDER.write();
-            *builder = builder.clone().set_override(key, value)?;
+            *builder = builder
+                .clone()
+                .set_override(key, value)
+                .map_err(CoreError::from)?;
         }
 
         Ok(())
@@ -42,7 +45,10 @@ impl AppConfigManager {
     }
 
     pub fn clone_to_app_config() -> CoreResult<AppConfig> {
-        let c = CONFIG_BUILDER.read().build_cloned()?;
+        let c = CONFIG_BUILDER
+            .read()
+            .build_cloned()
+            .map_err(CoreError::from)?;
 
         let app_config: AppConfig = c.into();
 

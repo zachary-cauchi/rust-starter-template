@@ -61,7 +61,7 @@ impl AppRuntime {
         Ok(())
     }
 
-    #[instrument]
+    #[instrument(skip(self))]
     async fn test_errors(&self) -> CoreResult<()> {
         debug!("Opening file.");
 

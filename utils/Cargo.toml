@@ -9,6 +9,7 @@ license.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+backtrace = "0.3.69"
 color-eyre = { workspace = true }
 config = { workspace = true }
 human-panic = "1.2.2"

@@ -38,11 +38,12 @@ async fn refresh_logging_with_config(
     Ok(log_manager)
 }
 
-#[instrument(skip(log_manager, app_config))]
-async fn entrypoint(log_manager: Weak<LoggingManager>, app_config: AppConfig) -> CoreResult<()> {
+#[instrument(skip(log_manager))]
+async fn entrypoint(log_manager: Weak<LoggingManager>) -> CoreResult<()> {
     let command = cli_match()?;
 
-    //TODO: Fix log_manager not logging all logs before program closing. Maybe only pass in a reference to the log_manager instead.
+    let app_config = AppConfigManager::clone_to_app_config()?;
+
     let app_state: AppRuntime = AppRuntime::new(log_manager, app_config);
 
     app_state.enter(command).await?;
@@ -81,7 +82,7 @@ async fn main() -> CoreResult<()> {
             info!("Interrupted. Shutting down.");
             Ok(())
         },
-        res = entrypoint(Rc::downgrade(&log_manager_pointer), app_config) => {
+        res = entrypoint(Rc::downgrade(&log_manager_pointer)) => {
             match res {
                 Ok(_) => {
                     info!("Completed. Exiting.");
